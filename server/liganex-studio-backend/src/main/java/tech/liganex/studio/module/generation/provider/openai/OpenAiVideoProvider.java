@@ -22,17 +22,17 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 /**
- * OpenAI Sora 视频生成适配器。
+ * OpenAI 兼容协议的视频生成适配器。
  *
  * <p><b>边界约定</b>：本类是该供应商的唯一边界——请求路径、请求体字段名、响应字段名与状态字面量
- * 全部只在这里出现。线上字段若与文档不一致，改动收敛在本类内，service/controller/前端均不受影响。
+ * 全部只在这里出现。具体用哪家模型由配置决定，本类不绑定任何厂商或具体模型名。
  *
  * <p><b>凭证</b>：未配置时 {@link #configured()} 为 false，且 {@link #submit} /
  * {@link #query} 会自行拒绝，保证任何调用路径都不会在无凭证时发出请求（不产生成本）。
  */
 @Slf4j
 @Component
-public class OpenAiSoraVideoProvider implements VideoGenerationProvider {
+public class OpenAiVideoProvider implements VideoGenerationProvider {
 
     public static final String NAME = "openai";
 
@@ -50,7 +50,7 @@ public class OpenAiSoraVideoProvider implements VideoGenerationProvider {
 
     private volatile RestClient restClient;
 
-    public OpenAiSoraVideoProvider(
+    public OpenAiVideoProvider(
             VideoGenerationProperties properties,
             RestClient.Builder restClientBuilder) {
         this.properties = properties;
@@ -78,7 +78,6 @@ public class OpenAiSoraVideoProvider implements VideoGenerationProvider {
         payload.put("model", modelFor(command));
         payload.put("prompt", command.prompt());
         if (command.durationSeconds() != null) {
-            // Sora 该字段为字符串形态的秒数，故显式转字符串而非依赖序列化器
             payload.put("seconds", String.valueOf(command.durationSeconds()));
         }
         if (notBlank(command.size())) {
@@ -97,7 +96,7 @@ public class OpenAiSoraVideoProvider implements VideoGenerationProvider {
 
         String providerTaskId = text(body, "id");
         if (providerTaskId == null) {
-            log.warn("sora submit response missing task id");
+            log.warn("video submit response missing task id");
             throw new BizException(ErrorCode.VIDEO_GENERATION_FAILED);
         }
         return new VideoSubmitResult(providerTaskId, modelFor(command), statusOf(text(body, "status")));
@@ -171,7 +170,7 @@ public class OpenAiSoraVideoProvider implements VideoGenerationProvider {
         try {
             return action.get();
         } catch (RestClientException ex) {
-            log.warn("sora video call failed: {}", SensitiveDataSanitizer.sanitize(ex.getMessage()));
+            log.warn("video generation call failed: {}", SensitiveDataSanitizer.sanitize(ex.getMessage()));
             throw new BizException(ErrorCode.VIDEO_GENERATION_FAILED);
         }
     }
@@ -185,7 +184,7 @@ public class OpenAiSoraVideoProvider implements VideoGenerationProvider {
             case "completed", "succeeded", "success" -> VideoTaskStatus.SUCCEEDED;
             case "failed", "error", "cancelled", "canceled" -> VideoTaskStatus.FAILED;
             default -> {
-                log.warn("sora returned unrecognized task status");
+                log.warn("video provider returned unrecognized task status");
                 throw new BizException(ErrorCode.VIDEO_GENERATION_FAILED);
             }
         };

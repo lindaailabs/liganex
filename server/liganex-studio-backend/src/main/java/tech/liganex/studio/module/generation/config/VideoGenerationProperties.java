@@ -23,8 +23,8 @@ public class VideoGenerationProperties {
 
         private String baseUrl;
         private String apiKey;
-        /** 默认模型；请求未指定模型时使用。 */
-        private String model = "sora-2";
+        /** 模型由项目配置决定，无默认值：未配置时该供应商视为「未配置」。 */
+        private String model = "";
 
         /**
          * 三要素齐全才算就绪：缺任一项都不应发起出站调用。
