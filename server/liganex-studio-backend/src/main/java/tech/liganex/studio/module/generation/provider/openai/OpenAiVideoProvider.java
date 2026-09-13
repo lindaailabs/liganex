@@ -36,8 +36,8 @@ public class OpenAiVideoProvider implements VideoGenerationProvider {
 
     public static final String NAME = "openai";
 
-    // 端点路径（submit/query/content）取自配置，默认 OpenAI 兼容形态；
-    // 对接可灵/豆包等第三方 OpenAI 兼容网关时，按需在配置里覆盖即可，代码无需改动。
+    // 端点路径与字段映射取自配置（默认按 Agnes AI 形态），对接其他第三方 OpenAI 兼容网关时
+    // 在 application.yml 的 openai 段覆盖 query-path / result-url-path / image-field / size-as-width-height 即可。
     private static final ParameterizedTypeReference<Map<String, Object>> JSON_OBJECT =
             new ParameterizedTypeReference<>() {
             };
@@ -74,14 +74,22 @@ public class OpenAiVideoProvider implements VideoGenerationProvider {
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("model", modelFor(command));
         payload.put("prompt", command.prompt());
-        if (command.durationSeconds() != null) {
-            payload.put("seconds", String.valueOf(command.durationSeconds()));
+        // 时长（seconds）在 Agnes 等网关由 num_frames/frame_rate 表达，此处暂不透传，避免未知字段导致 400
+        if (notBlank(command.imageUrl())) {
+            payload.put(properties.getOpenai().getImageField(), command.imageUrl());
         }
         if (notBlank(command.size())) {
-            payload.put("size", command.size());
-        }
-        if (notBlank(command.imageUrl())) {
-            payload.put("input_reference", command.imageUrl());
+            if (properties.getOpenai().isSizeAsWidthHeight()) {
+                int[] wh = parseSize(command.size());
+                if (wh != null) {
+                    payload.put("width", wh[0]);
+                    payload.put("height", wh[1]);
+                } else {
+                    payload.put("size", command.size());
+                }
+            } else {
+                payload.put("size", command.size());
+            }
         }
 
         Map<String, Object> body = call(() -> client().post()
@@ -91,7 +99,7 @@ public class OpenAiVideoProvider implements VideoGenerationProvider {
                 .retrieve()
                 .body(JSON_OBJECT));
 
-        String providerTaskId = text(body, "id");
+        String providerTaskId = firstNonBlank(text(body, "video_id"), text(body, "id"), text(body, "task_id"));
         if (providerTaskId == null) {
             log.warn("video submit response missing task id");
             throw new BizException(ErrorCode.VIDEO_GENERATION_FAILED);
@@ -113,7 +121,7 @@ public class OpenAiVideoProvider implements VideoGenerationProvider {
 
         VideoTaskStatus status = statusOf(text(body, "status"));
         return switch (status) {
-            case SUCCEEDED -> VideoTaskSnapshot.succeeded(contentUrl(providerTaskId));
+            case SUCCEEDED -> VideoTaskSnapshot.succeeded(resultUrl(body));
             case FAILED -> VideoTaskSnapshot.failed(firstNonBlank(
                     text(body, "error", "message"),
                     text(body, "error", "code"),
@@ -128,15 +136,44 @@ public class OpenAiVideoProvider implements VideoGenerationProvider {
     }
 
     /**
-     * 成片取回地址（绝对 URL）。
+     * 从轮询响应里取出成片地址。
      *
-     * <p>注：该端点需带鉴权头，浏览器不能直接播放。当前切片把它作为「资产定位符」暴露，
-     * 由后端代理取回字节是后续任务——届时前端契约不变，只把 src 换成本服务的代理端点。
+     * <p>地址来自供应商响应体内的字段（由 {@code resultUrlPath} 配置，默认 {@code metadata.url}），
+     * 不经过独立的内容端点。该地址通常为公开/短时有效的输出 URL（如 Agnes 的
+     * platform-outputs.agnes-ai.space），浏览器可直接播放；若个别网关要求鉴权，则应由后端代理
+     * 取回字节（后续任务，前端契约不变）。
      */
-    private String contentUrl(String providerTaskId) {
-        String base = properties.getOpenai().getUrl();
-        String normalizedBase = base.endsWith("/") ? base.substring(0, base.length() - 1) : base;
-        return normalizedBase + properties.getOpenai().getContentPath().replace("{id}", providerTaskId);
+    private String resultUrl(Map<String, Object> body) {
+        String path = properties.getOpenai().getResultUrlPath();
+        if (path == null || path.isBlank()) {
+            return null;
+        }
+        Object cursor = body;
+        for (String part : path.split("\\.")) {
+            if (cursor instanceof Map<?, ?> map) {
+                cursor = map.get(part);
+            } else {
+                cursor = null;
+                break;
+            }
+        }
+        return cursor instanceof String str && !str.isBlank() ? str : null;
+    }
+
+    /** 解析 "WxH" 为 [width, height]（忽略非数字或格式不符）。 */
+    private static int[] parseSize(String size) {
+        if (size == null) {
+            return null;
+        }
+        String[] parts = size.split("[xX]");
+        if (parts.length != 2) {
+            return null;
+        }
+        try {
+            return new int[]{Integer.parseInt(parts[0].trim()), Integer.parseInt(parts[1].trim())};
+        } catch (NumberFormatException ex) {
+            return null;
+        }
     }
 
     private RestClient client() {

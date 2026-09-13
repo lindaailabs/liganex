@@ -27,13 +27,23 @@ public class VideoGenerationProperties {
         private String key;
         /** 模型名（配置固定字段 name）：如 kling-v1 / doubao-seedance 等任意 OpenAI 兼容模型。无默认值：未配置时该供应商视为「未配置」。 */
         private String name = "";
-        /**
-         * OpenAI 兼容端点路径；默认按 OpenAI 形态。对接可灵/豆包等第三方 OpenAI 兼容
-         * 网关时，若其路径不同，直接在配置里覆盖这三项即可，代码无需改动。
-         */
+        /** 提交端点路径。 */
         private String submitPath = "/v1/videos";
-        private String queryPath = "/v1/videos/{id}";
-        private String contentPath = "/v1/videos/{id}/content";
+        /**
+         * 轮询（查询）端点路径；{@code {id}} 会被提交返回的任务标识替换。
+         * 默认采用 Agnes AI 推荐形式（query 参数），对接其他网关时覆盖即可。
+         */
+        private String queryPath = "/agnesapi?video_id={id}";
+        /**
+         * 查询响应体内「成片地址」的字段路径（点号分隔），用于从轮询响应里取回可播放/下载的 URL。
+         * 默认 {@code metadata.url}（Agnes AI 形态）。走独立 /content 端点的供应商可覆盖为本服务
+         * 代理端点或直接 {@code data.url}。
+         */
+        private String resultUrlPath = "metadata.url";
+        /** 图生视频时，请求体里承载输入图片地址的字段名；默认 {@code image}（Agnes AI / 多数 OpenAI 兼容网关）。 */
+        private String imageField = "image";
+        /** 是否把前端 size（WxH）拆成 width/height 整数字段发出；默认 true（Agnes AI 用 width/height）。 */
+        private boolean sizeAsWidthHeight = true;
 
         /**
          * 三要素齐全才算就绪：缺任一项都不应发起出站调用。

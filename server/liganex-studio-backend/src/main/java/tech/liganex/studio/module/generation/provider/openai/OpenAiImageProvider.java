@@ -71,6 +71,9 @@ public class OpenAiImageProvider implements ImageGenerationProvider {
         payload.put("prompt", command.prompt());
         if (notBlank(command.size())) {
             payload.put("size", command.size());
+        } else {
+            // Agnes AI 将 size 视为必填；缺省给一个兼容写法，避免 400
+            payload.put("size", "1024x1024");
         }
         payload.put("n", 1);
 
