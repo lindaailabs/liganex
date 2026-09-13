@@ -21,10 +21,12 @@ public class VideoGenerationProperties {
     @Data
     public static class OpenAi {
 
-        private String baseUrl;
-        private String apiKey;
-        /** 模型由项目配置决定，无默认值：未配置时该供应商视为「未配置」。 */
-        private String model = "";
+        /** 模型网关地址（配置固定字段 url）。 */
+        private String url;
+        /** 模型密钥（配置固定字段 key）。 */
+        private String key;
+        /** 模型名（配置固定字段 name）：如 kling-v1 / doubao-seedance 等任意 OpenAI 兼容模型。无默认值：未配置时该供应商视为「未配置」。 */
+        private String name = "";
         /**
          * OpenAI 兼容端点路径；默认按 OpenAI 形态。对接可灵/豆包等第三方 OpenAI 兼容
          * 网关时，若其路径不同，直接在配置里覆盖这三项即可，代码无需改动。
@@ -40,7 +42,7 @@ public class VideoGenerationProperties {
          * 不在此处单列——适配器不自建 requestFactory，以保持 RestClient.Builder 可被测试替换。
          */
         public boolean configured() {
-            return notBlank(baseUrl) && notBlank(apiKey) && notBlank(model);
+            return notBlank(url) && notBlank(key) && notBlank(name);
         }
 
         private static boolean notBlank(String value) {

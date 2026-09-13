@@ -91,7 +91,7 @@ public class OpenAiImageProvider implements ImageGenerationProvider {
     }
 
     private String modelFor(ImageGenerationCommand command) {
-        return notBlank(command.model()) ? command.model() : properties.getOpenai().getModel();
+        return notBlank(command.model()) ? command.model() : properties.getOpenai().getName();
     }
 
     private RestClient client() {
@@ -99,7 +99,8 @@ public class OpenAiImageProvider implements ImageGenerationProvider {
             synchronized (this) {
                 if (restClient == null) {
                     restClient = restClientBuilder
-                            .baseUrl(properties.getOpenai().getBaseUrl())
+                            .baseUrl(properties.getOpenai().getUrl())
+                            .requestHeader("Authorization", "Bearer " + properties.getOpenai().getKey())
                             .build();
                 }
             }

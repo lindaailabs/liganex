@@ -124,7 +124,7 @@ public class OpenAiVideoProvider implements VideoGenerationProvider {
     }
 
     private String modelFor(VideoGenerationCommand command) {
-        return notBlank(command.model()) ? command.model() : properties.getOpenai().getModel();
+        return notBlank(command.model()) ? command.model() : properties.getOpenai().getName();
     }
 
     /**
@@ -134,7 +134,7 @@ public class OpenAiVideoProvider implements VideoGenerationProvider {
      * 由后端代理取回字节是后续任务——届时前端契约不变，只把 src 换成本服务的代理端点。
      */
     private String contentUrl(String providerTaskId) {
-        String base = properties.getOpenai().getBaseUrl();
+        String base = properties.getOpenai().getUrl();
         String normalizedBase = base.endsWith("/") ? base.substring(0, base.length() - 1) : base;
         return normalizedBase + properties.getOpenai().getContentPath().replace("{id}", providerTaskId);
     }
@@ -144,7 +144,8 @@ public class OpenAiVideoProvider implements VideoGenerationProvider {
             synchronized (this) {
                 if (restClient == null) {
                     restClient = restClientBuilder
-                            .baseUrl(properties.getOpenai().getBaseUrl())
+                            .baseUrl(properties.getOpenai().getUrl())
+                            .requestHeader("Authorization", "Bearer " + properties.getOpenai().getKey())
                             .build();
                 }
             }
