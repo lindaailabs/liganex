@@ -31,19 +31,17 @@ public class VideoGenerationProperties {
         private String submitPath = "/v1/videos";
         /**
          * 轮询（查询）端点路径；{@code {id}} 会被提交返回的任务标识替换。
-         * 默认采用 Agnes AI 推荐形式（query 参数），对接其他网关时覆盖即可。
+         * 默认 {@code /v1/videos/{id}}（Agnes AI 实测路径）。
          */
-        private String queryPath = "/agnesapi?video_id={id}";
+        private String queryPath = "/v1/videos/{id}";
         /**
          * 查询响应体内「成片地址」的字段路径（点号分隔），用于从轮询响应里取回可播放/下载的 URL。
-         * 默认 {@code metadata.url}（Agnes AI 形态）。走独立 /content 端点的供应商可覆盖为本服务
-         * 代理端点或直接 {@code data.url}。
+         * 默认 {@code url}（Agnes AI 实测为响应体顶层 url 字段）；取不到时内部会回退到
+         * {@code metadata.url} / {@code data.url}。走独立 /content 端点的供应商可覆盖为对应路径。
          */
-        private String resultUrlPath = "metadata.url";
-        /** 图生视频时，请求体里承载输入图片地址的字段名；默认 {@code image}（Agnes AI / 多数 OpenAI 兼容网关）。 */
+        private String resultUrlPath = "url";
+        /** 图生视频时，请求体里承载输入图片地址的字段名；默认 {@code image}（Agnes AI 实测）。 */
         private String imageField = "image";
-        /** 是否把前端 size（WxH）拆成 width/height 整数字段发出；默认 true（Agnes AI 用 width/height）。 */
-        private boolean sizeAsWidthHeight = true;
 
         /**
          * 三要素齐全才算就绪：缺任一项都不应发起出站调用。

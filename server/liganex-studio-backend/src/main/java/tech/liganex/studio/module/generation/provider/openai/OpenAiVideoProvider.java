@@ -36,8 +36,8 @@ public class OpenAiVideoProvider implements VideoGenerationProvider {
 
     public static final String NAME = "openai";
 
-    // 端点路径与字段映射取自配置（默认按 Agnes AI 形态），对接其他第三方 OpenAI 兼容网关时
-    // 在 application.yml 的 openai 段覆盖 query-path / result-url-path / image-field / size-as-width-height 即可。
+    // 端点路径与字段映射取自配置（默认按 Agnes AI 实测契约），对接其他第三方 OpenAI 兼容网关时
+    // 在 application.yml 的 openai 段覆盖 query-path / result-url-path / image-field 即可。
     private static final ParameterizedTypeReference<Map<String, Object>> JSON_OBJECT =
             new ParameterizedTypeReference<>() {
             };
@@ -74,22 +74,14 @@ public class OpenAiVideoProvider implements VideoGenerationProvider {
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("model", modelFor(command));
         payload.put("prompt", command.prompt());
-        // 时长（seconds）在 Agnes 等网关由 num_frames/frame_rate 表达，此处暂不透传，避免未知字段导致 400
         if (notBlank(command.imageUrl())) {
             payload.put(properties.getOpenai().getImageField(), command.imageUrl());
         }
-        if (notBlank(command.size())) {
-            if (properties.getOpenai().isSizeAsWidthHeight()) {
-                int[] wh = parseSize(command.size());
-                if (wh != null) {
-                    payload.put("width", wh[0]);
-                    payload.put("height", wh[1]);
-                } else {
-                    payload.put("size", command.size());
-                }
-            } else {
-                payload.put("size", command.size());
-            }
+        // Agnes AI 用 aspect_ratio（如 16:9）控制画面比例，由前端 size（WxH）推导；缺省 16:9
+        payload.put("aspect_ratio", deriveAspectRatio(command.size()));
+        // 时长（Agnes 用整数 duration，单位秒）；前端未给则交给网关默认
+        if (command.durationSeconds() != null) {
+            payload.put("duration", command.durationSeconds());
         }
 
         Map<String, Object> body = call(() -> client().post()
@@ -138,42 +130,68 @@ public class OpenAiVideoProvider implements VideoGenerationProvider {
     /**
      * 从轮询响应里取出成片地址。
      *
-     * <p>地址来自供应商响应体内的字段（由 {@code resultUrlPath} 配置，默认 {@code metadata.url}），
-     * 不经过独立的内容端点。该地址通常为公开/短时有效的输出 URL（如 Agnes 的
+     * <p>地址来自供应商响应体内的字段（由 {@code resultUrlPath} 配置，默认 {@code url} 即响应顶层
+     * url 字段，Agnes AI 实测形态；取不到时回退 {@code metadata.url} / {@code data.url}），不经过
+     * 独立的内容端点。该地址通常为公开/短时有效的输出 URL（如 Agnes 的
      * platform-outputs.agnes-ai.space），浏览器可直接播放；若个别网关要求鉴权，则应由后端代理
      * 取回字节（后续任务，前端契约不变）。
      */
     private String resultUrl(Map<String, Object> body) {
-        String path = properties.getOpenai().getResultUrlPath();
-        if (path == null || path.isBlank()) {
-            return null;
+        String primary = properties.getOpenai().getResultUrlPath();
+        String[] candidates = (primary == null || primary.isBlank())
+                ? new String[]{"url", "metadata.url", "data.url"}
+                : new String[]{primary, "url", "metadata.url", "data.url"};
+        for (String path : candidates) {
+            String value = readPath(body, path);
+            if (value != null) {
+                return value;
+            }
         }
+        return null;
+    }
+
+    /** 按点号分隔路径读取嵌套字段，缺失或非字符串返回 null。 */
+    private static String readPath(Map<String, Object> body, String path) {
         Object cursor = body;
         for (String part : path.split("\\.")) {
             if (cursor instanceof Map<?, ?> map) {
                 cursor = map.get(part);
             } else {
-                cursor = null;
-                break;
+                return null;
             }
         }
         return cursor instanceof String str && !str.isBlank() ? str : null;
     }
 
-    /** 解析 "WxH" 为 [width, height]（忽略非数字或格式不符）。 */
-    private static int[] parseSize(String size) {
+    /** 由前端 size（WxH）推导 aspect_ratio（如 9:16）；无法解析时回退 16:9。 */
+    private static String deriveAspectRatio(String size) {
         if (size == null) {
-            return null;
+            return "16:9";
         }
         String[] parts = size.split("[xX]");
         if (parts.length != 2) {
-            return null;
+            return "16:9";
         }
         try {
-            return new int[]{Integer.parseInt(parts[0].trim()), Integer.parseInt(parts[1].trim())};
+            int w = Integer.parseInt(parts[0].trim());
+            int h = Integer.parseInt(parts[1].trim());
+            if (w <= 0 || h <= 0) {
+                return "16:9";
+            }
+            int g = gcd(w, h);
+            return (w / g) + ":" + (h / g);
         } catch (NumberFormatException ex) {
-            return null;
+            return "16:9";
         }
+    }
+
+    private static int gcd(int a, int b) {
+        while (b != 0) {
+            int t = b;
+            b = a % b;
+            a = t;
+        }
+        return a;
     }
 
     private RestClient client() {
