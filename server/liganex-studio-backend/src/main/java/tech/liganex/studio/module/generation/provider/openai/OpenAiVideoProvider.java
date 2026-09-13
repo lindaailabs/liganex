@@ -36,11 +36,8 @@ public class OpenAiVideoProvider implements VideoGenerationProvider {
 
     public static final String NAME = "openai";
 
-    private static final String SUBMIT_PATH = "/v1/videos";
-    private static final String QUERY_PATH = "/v1/videos/{id}";
-    /** 取回成片字节的端点（需鉴权），作为资产定位符对外暴露。 */
-    private static final String CONTENT_PATH = "/v1/videos/{id}/content";
-
+    // 端点路径（submit/query/content）取自配置，默认 OpenAI 兼容形态；
+    // 对接可灵/豆包等第三方 OpenAI 兼容网关时，按需在配置里覆盖即可，代码无需改动。
     private static final ParameterizedTypeReference<Map<String, Object>> JSON_OBJECT =
             new ParameterizedTypeReference<>() {
             };
@@ -88,7 +85,7 @@ public class OpenAiVideoProvider implements VideoGenerationProvider {
         }
 
         Map<String, Object> body = call(() -> client().post()
-                .uri(SUBMIT_PATH)
+                .uri(properties.getOpenai().getSubmitPath())
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(payload)
                 .retrieve()
@@ -110,7 +107,7 @@ public class OpenAiVideoProvider implements VideoGenerationProvider {
         }
 
         Map<String, Object> body = call(() -> client().get()
-                .uri(QUERY_PATH, providerTaskId)
+                .uri(properties.getOpenai().getQueryPath(), providerTaskId)
                 .retrieve()
                 .body(JSON_OBJECT));
 
@@ -139,7 +136,7 @@ public class OpenAiVideoProvider implements VideoGenerationProvider {
     private String contentUrl(String providerTaskId) {
         String base = properties.getOpenai().getBaseUrl();
         String normalizedBase = base.endsWith("/") ? base.substring(0, base.length() - 1) : base;
-        return normalizedBase + CONTENT_PATH.replace("{id}", providerTaskId);
+        return normalizedBase + properties.getOpenai().getContentPath().replace("{id}", providerTaskId);
     }
 
     private RestClient client() {

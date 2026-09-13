@@ -32,8 +32,7 @@ public class OpenAiImageProvider implements ImageGenerationProvider {
 
     public static final String NAME = "openai";
 
-    private static final String GENERATE_PATH = "/v1/images/generations";
-
+    // 端点路径取自配置，默认 OpenAI 兼容形态；对接第三方网关时按需覆盖。
     private static final ParameterizedTypeReference<Map<String, Object>> JSON_OBJECT =
             new ParameterizedTypeReference<>() {
             };
@@ -76,7 +75,7 @@ public class OpenAiImageProvider implements ImageGenerationProvider {
         payload.put("n", 1);
 
         Map<String, Object> body = call(() -> client().post()
-                .uri(GENERATE_PATH)
+                .uri(properties.getOpenai().getGeneratePath())
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(payload)
                 .retrieve()

@@ -25,6 +25,13 @@ public class VideoGenerationProperties {
         private String apiKey;
         /** 模型由项目配置决定，无默认值：未配置时该供应商视为「未配置」。 */
         private String model = "";
+        /**
+         * OpenAI 兼容端点路径；默认按 OpenAI 形态。对接可灵/豆包等第三方 OpenAI 兼容
+         * 网关时，若其路径不同，直接在配置里覆盖这三项即可，代码无需改动。
+         */
+        private String submitPath = "/v1/videos";
+        private String queryPath = "/v1/videos/{id}";
+        private String contentPath = "/v1/videos/{id}/content";
 
         /**
          * 三要素齐全才算就绪：缺任一项都不应发起出站调用。

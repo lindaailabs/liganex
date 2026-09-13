@@ -25,6 +25,11 @@ public class ImageGenerationProperties {
         private String apiKey;
         /** 模型由项目配置决定，无默认值：未配置时该供应商视为「未配置」。 */
         private String model = "";
+        /**
+         * OpenAI 兼容端点路径；默认 {@code /v1/images/generations}。对接第三方 OpenAI 兼容
+         * 网关、路径不一致时，在配置里覆盖即可，代码无需改动。
+         */
+        private String generatePath = "/v1/images/generations";
 
         public boolean configured() {
             return notBlank(baseUrl) && notBlank(apiKey) && notBlank(model);

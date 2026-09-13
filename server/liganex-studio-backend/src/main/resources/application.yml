@@ -116,16 +116,19 @@ liganex:
       summary-trigger-count: ${LIGANEX_RAG_SUMMARY_TRIGGER_COUNT:24}
       summary-source-limit: ${LIGANEX_RAG_SUMMARY_SOURCE_LIMIT:40}
   generation:
-    # 图片与视频生成均走 OpenAI 兼容协议；具体用哪家模型完全由项目配置（本段）决定，
-    # 代码不绑定任何厂商或具体模型。base-url / api-key / model 经环境变量注入，
+    # 图片与视频生成均走 OpenAI 兼容协议；具体用哪家模型、哪个网关完全由项目配置（本段）决定，
+    # 代码不绑定任何厂商或具体模型（不会写死 OpenAI Sora）。base-url / api-key / model 经环境变量注入，
     # 未注入时该供应商视为「未配置」，服务层在发起任何出站调用前即拒绝（返回 503）。
+    # 端点路径（如 /v1/videos、/v1/images/generations）默认 OpenAI 形态，若对接可灵/豆包等
+    # 第三方 OpenAI 兼容网关时其路径不同，可在下方 openai 段追加 submit-path / query-path /
+    # content-path（视频）或 generate-path（图片）覆盖，无需改代码。
     video:
       # 请求未指定供应商时使用的默认值；新增供应商后改这里即可切换
       provider: ${LIGANEX_VIDEO_PROVIDER:openai}
       openai:
         base-url: ${LIGANEX_VIDEO_OPENAI_BASE_URL:}
         api-key: ${LIGANEX_VIDEO_OPENAI_API_KEY:}
-        # 模型名由配置决定（如 gpt-image-1 / sora-2 等任意 OpenAI 兼容模型），不写死
+        # 模型名由配置决定（如 kling-v1 / doubao-seedance 等任意 OpenAI 兼容模型），不写死
         model: ${LIGANEX_VIDEO_OPENAI_MODEL:}
     image:
       provider: ${LIGANEX_IMAGE_PROVIDER:openai}
