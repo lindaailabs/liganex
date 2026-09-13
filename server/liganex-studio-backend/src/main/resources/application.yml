@@ -115,3 +115,13 @@ liganex:
       recent-message-limit: ${LIGANEX_RAG_RECENT_MESSAGE_LIMIT:16}
       summary-trigger-count: ${LIGANEX_RAG_SUMMARY_TRIGGER_COUNT:24}
       summary-source-limit: ${LIGANEX_RAG_SUMMARY_SOURCE_LIMIT:40}
+  generation:
+    video:
+      # 请求未指定供应商时使用的默认值；新增供应商后改这里即可切换
+      provider: ${LIGANEX_VIDEO_PROVIDER:openai}
+      openai:
+        # 无默认值：未注入时该供应商视为「未配置」，服务层在发起任何出站调用前即拒绝
+        # （返回 VIDEO_PROVIDER_NOT_CONFIGURED / HTTP 503），因此本地无 key 也不会产生费用
+        base-url: ${LIGANEX_VIDEO_OPENAI_BASE_URL:}
+        api-key: ${LIGANEX_VIDEO_OPENAI_API_KEY:}
+        model: ${LIGANEX_VIDEO_OPENAI_MODEL:sora-2}

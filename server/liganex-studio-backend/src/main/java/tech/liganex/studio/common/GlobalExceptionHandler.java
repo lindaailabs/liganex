@@ -45,7 +45,11 @@ public class GlobalExceptionHandler {
             case 401 -> HttpStatus.UNAUTHORIZED;
             case 403 -> HttpStatus.FORBIDDEN;
             case 404 -> HttpStatus.NOT_FOUND;
-            case 400, 410, 420, 430 -> HttpStatus.BAD_REQUEST;
+            // 460 段专用于「服务未配置/未就绪」，必须与 500 区分：用户据此判断是配置缺失而非服务故障
+            case 460 -> HttpStatus.SERVICE_UNAVAILABLE;
+            // 480 段表示上游供应商故障，网关语义
+            case 480 -> HttpStatus.BAD_GATEWAY;
+            case 400, 410, 420, 430, 470 -> HttpStatus.BAD_REQUEST;
             default -> HttpStatus.INTERNAL_SERVER_ERROR;
         };
     }

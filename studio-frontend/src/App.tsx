@@ -8,6 +8,7 @@ import OpenAppPage from './pages/OpenAppPage';
 import KnowledgeBaseListPage from './pages/KnowledgeBaseListPage';
 import KnowledgeBaseDetailPage from './pages/KnowledgeBaseDetailPage';
 import ChatPage from './pages/ChatPage';
+import VideoCanvasPage from './pages/VideoCanvasPage';
 
 function RequireAuth({ children }: { children: ReactNode }) {
   const { token } = useAuth();
@@ -35,6 +36,7 @@ export default function App() {
           <Route path="knowledge/bases/:id" element={<KnowledgeBaseDetailPage />} />
           <Route path="chat" element={<ChatPage />} />
           <Route path="chat/:conversationId" element={<ChatPage />} />
+          <Route path="video/canvas" element={<VideoCanvasPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

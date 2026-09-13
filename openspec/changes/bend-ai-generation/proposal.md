@@ -15,6 +15,14 @@
 - 新增 B 端**客户业务系统（多菜单）**：统一登录/导航框架，承载 AI 创作、订单管理、商品管理、库存管理、数据看板、账户配额等模块（前端置于 `liganex-studio` frontend）。
 - **单一前端入口约束**：面向客户的所有操作收敛到 `liganex-studio` 这一个前端应用，不另起独立客户前端/子域/微前端；原「客户端 / agent 运行时」职责也并入此应用。
 - 流式对话作为业务系统的「AI 创作 / 智能助手」模块入口之一：文本/图片输入 → 意图路由（生成能力 / ERP 查询）→ SSE 流式返回；与四类生成能力并列，并承载智能客服问答。
+- 新增**视频生成落地切片**：前端节点式画布（`liganex-studio` frontend，提示词/图片 → 视频生成 → 结果预览）+ 后端 OpenAI Sora 供应商适配器与异步任务（`liganex-studio/backend` 的 `module/generation`），兑现「供应商可插拔」与「未配置明确报错」两条既有约束。
+
+## 与 design.md 的仓归属偏离（本次实现说明）
+design.md 提议生成后端独立为 `liganex-gen` 仓。本次**未拆仓**，视频生成切片直接落在 `liganex-studio/backend` 的 `module/generation`，保持模块化单体（ADR-0006）。
+
+- **偏离理由**：单供应商、单能力的最小闭环尚不足以支撑独立部署单元；先以模块边界（package 结构 + DTO 隔离）兑现同等演进能力，避免过早分布式化带来的运维成本。
+- **约束**：`module/generation` 不与其他模块共享实体；供应商请求构造与响应字段解析全部收敛在 `provider/openai` 内，使线上字段差异只在适配器内收敛。
+- **影响**：design.md 的仓库拓扑为**目标态**，本次为**过渡态**；日后拆分 `liganex-gen` 时须整体迁移 `module/generation` 包与 `V9__ai_video_generation.sql`，并保持 REST 契约不变。
 
 ## Impact
 - 新增业务仓库（详见 design.md 的仓库归属提议）：建议生成后端独立为 `liganex-gen`，B 端工作台 UI 并入 `liganex-studio`。

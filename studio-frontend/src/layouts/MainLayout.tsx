@@ -25,6 +25,11 @@ export default function MainLayout() {
       match: (path: string) => path.startsWith('/knowledge'),
     },
     { key: '/chat', label: '智能问答', match: (path: string) => path.startsWith('/chat') },
+    {
+      key: '/video/canvas',
+      label: '视频创作画布',
+      match: (path: string) => path.startsWith('/video'),
+    },
   ];
   const activeItem = navigation.find((item) => item.match(location.pathname)) ?? navigation[0];
 
