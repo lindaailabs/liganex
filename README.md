@@ -56,6 +56,12 @@ Studio 按业务域展示可下载的 Skill 包及其能力范围，开发者可
 
 ![Liganex Studio 智能问答](docs/assets/screenshots/studio-chat.png)
 
+### 节点式 AI 视频生成画布
+
+B 端 AI 创作能力：基于 `@xyflow/react` 的无限节点画布，支持提示词输入、文生视频 / 图生视频、结果预览；后端以 OpenAI 兼容协议对接任意第三方视频模型，模型/网关完全配置化。由 loopctl 自主管线生成并推送为 [liganex/pull/1](https://github.com/lindaailabs/liganex/pull/1)。
+
+![[loopctl] B端 AI 视频生成节点画布 PR](docs/assets/screenshots/loopctl-pr-ai-video-canvas.png)
+
 ## 架构（四层）
 
 ```
