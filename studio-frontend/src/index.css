@@ -192,9 +192,94 @@ body {
   margin-top: 10px;
 }
 
+/* 视频创作画布 */
+.canvas-page {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  height: calc(100vh - 112px);
+  min-height: 560px;
+}
+
+.canvas-hint {
+  margin-bottom: 0 !important;
+}
+
+.canvas-shell {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+}
+
+.canvas-alert {
+  flex: 0 0 auto;
+}
+
+.canvas-flow {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid #f0f0f0;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.canvas-node {
+  width: 260px;
+  padding: 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 6%);
+}
+
+.canvas-node-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.canvas-node-video {
+  border-color: #bae0ff;
+}
+
+.canvas-node-preview {
+  border-color: #d9f7be;
+}
+
+.canvas-node-message {
+  display: block;
+  font-size: 12px;
+  word-break: break-word;
+}
+
+.canvas-node-footnote {
+  display: none;
+}
+
+.canvas-preview-video {
+  width: 100%;
+  max-height: 180px;
+  border-radius: 6px;
+  background: #000;
+}
+
 @media (max-width: 900px) {
   .studio-content {
     margin: 12px;
+  }
+
+  .canvas-page {
+    height: auto;
+  }
+
+  .canvas-flow {
+    height: calc(100vh - 320px);
+    min-height: 480px;
   }
 
   .chat-shell {

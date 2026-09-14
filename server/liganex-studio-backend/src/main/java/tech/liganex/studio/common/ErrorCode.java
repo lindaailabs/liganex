@@ -40,6 +40,22 @@ public enum ErrorCode {
     // 内部服务接口（internal-api）
     INTERNAL_API_KEY_INVALID(45001, "服务间凭证无效"),
 
+    // 视频生成（ai-video-generation）
+    // 460 段 = 服务未就绪（HTTP 503）：区别于内部错误，用户可据此判断是配置缺失而非服务故障
+    VIDEO_PROVIDER_NOT_CONFIGURED(46001, "视频生成服务未配置"),
+    // 470 段 = 请求侧可纠正的错误（HTTP 400）
+    VIDEO_PROVIDER_UNSUPPORTED(47001, "不支持的视频生成供应商"),
+    // 480 段 = 上游供应商故障（HTTP 502）
+    VIDEO_GENERATION_FAILED(48001, "视频生成供应商调用失败"),
+    VIDEO_TASK_NOT_FOUND(40412, "视频生成任务不存在"),
+
+    // 图片生成（ai-image-generation）
+    // 461 段 = 服务未就绪（HTTP 503）；471 段 = 请求侧可纠正（HTTP 400）；481 段 = 上游故障（HTTP 502）
+    IMAGE_PROVIDER_NOT_CONFIGURED(46101, "图片生成服务未配置"),
+    IMAGE_PROVIDER_UNSUPPORTED(47101, "不支持的图片生成供应商"),
+    IMAGE_GENERATION_FAILED(48101, "图片生成供应商调用失败"),
+    IMAGE_TASK_NOT_FOUND(40413, "图片生成任务不存在"),
+
     // MCP / 开放平台签名鉴权（mcp-auth）
     SIGNATURE_INVALID(44001, "签名校验失败"),
     TIMESTAMP_EXPIRED(44002, "请求时间戳超出有效期"),

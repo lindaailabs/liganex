@@ -67,6 +67,16 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-validation</artifactId>
     </dependency>
+    <!--
+      Spring Boot 4 起 RestClient 自动配置独立成 starter（与上面的 Flyway 同理）：
+      仅靠 spring-boot-starter-web 不会有 RestClient.Builder bean，视频生成模块的
+      OpenAI 适配器构造器注入会因缺少依赖而启动失败。测试里自建 RestClient.builder()
+      不会暴露该问题，故必须在此显式引入。
+    -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-restclient</artifactId>
+    </dependency>
 
     <!-- Security + JWT (OAuth2 Resource Server 提供 Nimbus JWT 编解码) -->
     <dependency>

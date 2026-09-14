@@ -115,3 +115,32 @@ liganex:
       recent-message-limit: ${LIGANEX_RAG_RECENT_MESSAGE_LIMIT:16}
       summary-trigger-count: ${LIGANEX_RAG_SUMMARY_TRIGGER_COUNT:24}
       summary-source-limit: ${LIGANEX_RAG_SUMMARY_SOURCE_LIMIT:40}
+  generation:
+    # 图片与视频生成均走 OpenAI 兼容协议；具体模型/网关由项目配置（本段）决定，代码不绑定任何厂商
+    # （不会写死 OpenAI Sora）。每个供应商固定配置 url / key / name 三项，经环境变量注入；未注入时
+    # 该供应商视为「未配置」，服务层在发起任何出站调用前即拒绝（返回 503）。
+    # 当前默认对齐测试网关 apihub.agnes-ai.com（Agnes AI）：url 已预填；测试时只需补 key 与 name
+    # （视频 agnes-video-v2.0 / 图片 agnes-image-2.1-flash）。Agnes 实测契约已设为默认值：
+    # 视频轮询 /v1/videos/{id}、成片取响应顶层 url（回退 metadata.url）、图生视频字段 image、
+    # size(WxH) 推导 aspect_ratio、时长为整数 duration；切换可灵/豆包等其它网关在 openai 段覆盖即可。
+    video:
+      # 请求未指定供应商时使用的默认值；新增供应商后改这里即可切换
+      provider: ${LIGANEX_VIDEO_PROVIDER:openai}
+      openai:
+        url: ${LIGANEX_VIDEO_OPENAI_URL:-https://apihub.agnes-ai.com}
+        key: ${LIGANEX_VIDEO_OPENAI_KEY:}
+        # 模型名由配置决定；测试填 agnes-video-v2.0
+        name: ${LIGANEX_VIDEO_OPENAI_NAME:}
+        # Agnes 实测契约（可覆盖以对接其它网关）：
+        # 轮询路径 /v1/videos/{id}；成片地址取响应顶层 url（回退 metadata.url/data.url）；
+        # 图生视频字段 image；size(WxH) 推导为 aspect_ratio；时长用整数 duration
+        query-path: /v1/videos/{id}
+        result-url-path: url
+        image-field: image
+    image:
+      provider: ${LIGANEX_IMAGE_PROVIDER:openai}
+      openai:
+        url: ${LIGANEX_IMAGE_OPENAI_URL:-https://apihub.agnes-ai.com}
+        key: ${LIGANEX_IMAGE_OPENAI_KEY:}
+        # 模型名由配置决定；测试填 agnes-image-2.1-flash
+        name: ${LIGANEX_IMAGE_OPENAI_NAME:}
